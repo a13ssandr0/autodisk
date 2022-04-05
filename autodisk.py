@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 from inotify.adapters import Inotify
 from inotify.calls import InotifyError
+from inotify.constants import IN_CREATE, IN_DELETE, IN_DELETE_SELF
 from yaml import safe_load, dump
 from time import sleep
 from json import loads
 from re import sub, search
-from inotify.constants import IN_CREATE, IN_DELETE, IN_DELETE_SELF
 from subprocess import check_output, run, CalledProcessError
 from pathlib import Path
 from os import chown, geteuid
