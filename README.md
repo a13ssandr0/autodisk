@@ -212,6 +212,6 @@ Last but not least, every contribution (even the smallest) is welcome, software 
 
 #
 #
-If you like UniTotem, consider giving me a tip.
+If you like autodisk, consider giving me a tip.
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/a13ssandr0)
