@@ -209,3 +209,9 @@ This program was written and tested on one platform only, so some features may b
 If you manage to make another device working, open an issue describing what you've done, I'll add it to the documentation.
 
 Last but not least, every contribution (even the smallest) is welcome, software is better when done together.
+
+#
+#
+If you like UniTotem, consider giving me a tip.
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/a13ssandr0)
