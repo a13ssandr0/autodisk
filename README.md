@@ -19,6 +19,7 @@ Automatically mount a drive if connected to a specific USB or SATA port.
     - [Disk fails to unmount](#disk-fails-to-unmount)
     - [No beep sound](#no-beep-sound)
 - [Contributing](#contributing)
+- [Changelog](#changelog-ddmmyyyy)
 
 
 ## Introduction
