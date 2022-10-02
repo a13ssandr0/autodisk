@@ -7,6 +7,7 @@ Automatically mount a drive if connected to a specific USB or SATA port.
     - [Implementation](#implementation)
     - [The unmount file](#the-unmount-file)
 - [Installation](#installation)
+    - [Updating](#updating)
     - [Dependencies](#dependencies)
     - [First run](#first-run)
     - [Adding ports](#adding-ports)
@@ -50,13 +51,16 @@ wget -O /usr/sbin/autodisk https://raw.githubusercontent.com/a13ssandr0/autodisk
 chmod 755 /usr/sbin/autodisk
 ```
 
+### Updating
+When installing a new version of the script, you should run it manually for the first time to check that the configuration file is working correctly with the new version.
+
 ### Dependencies
 To run correctly Autodisk needs the following linux programs:
 - `udev` with rule `60-persistent-storage.rules` enabled (should be already present in normal installation, unless you are running a highly customized OS with different rules or even without udev)
 - `lsblk`
 - `mount`
 - `umount`
-- `lsof` and `xargs` (only needed in [certain cases](#disk-fails-to-unmount))
+- `lsof` (only needed in [certain cases](#disk-fails-to-unmount))
 - `beep` and kernel module `pcspkr` enabled ([see later](#enabling-acoustic-notification))
 
 It also needs `python3` (version 3.8.10 was used during testing) and the following packages:
@@ -66,6 +70,7 @@ It also needs `python3` (version 3.8.10 was used during testing) and the followi
 ### First run
 After installation, run the program manually (as root) to create the configuration file, `/etc/autodisk/autodisk.conf` is automatically generated with default parameters:
 ```yaml
+beep: true
 devices: []
 mount_path_owner: root
 # the user that owns the mountpoint
@@ -77,6 +82,9 @@ mount_path_perms: 493
 # feel free to use base8 or base10 numbers, just remember octals start with a 0, eg. 0755
 mount_path_root: /share/external
 # the main folder that will contain the mountpoints
+kill:
+- smbd
+# list of processes to kill before unmounting
 ```
 
 ### Adding ports
@@ -184,20 +192,21 @@ and add a `#` at the beginning to comment it.
 Check if it worked by rebooting the system and running `beep` after login.
 
 ### Disabling acoustic notification
-At the moment the program has no option to disable beep (it will be added soon), but if you don't like it you can comment the lines in the source code, or blacklist the module in `/etc/modprobe.d/blacklist.conf`.
+Set `beep` to `false` in `/etc/autodisk/autodisk.conf` to disable acoustic notification
 
 ## Troubleshooting
 ### Disk fails to unmount
 When testing the program one issue I had to solve was that, if any folder inside the mount point (or even the whole mountpoint) was shared via SMB, the `smbd` daemon kept files and folders locked even when nobody was using them. Since there was no way I could find to disable those locks, I did as others suggested: terminating the processes (that's why we need lsof and xargs) sending them SIGTERM.
 
-If any other program you will be using behaves the same, edit the program to kill it adding another line like this inside the `unmount` function
-```python
-def unmount(block_dev) -> bool:
-    ...
-    run("lsof -atc [PROGRAM] {}/{}/{} | xargs -r kill".format(_MOUNT_PATH_ROOT, block_name, part_name), shell=True)
-    ...
+If any other program you will be using behaves the same, edit the configuration file adding the name of the program you want to kill as an element in the `kill` list:
+```yaml
+kill:
+- smbd
+- program2
+- program3
+...
 ```
-replacing `[PROGRAM]` whith the name of the program you want to kill.
+Keep in mind that this is a workaround used as last resource, you should always find a better way of closing file handles than killing processes.
 
 ### No beep sound
 - Try switching to root user via `sudo su -` and running `beep` without arguments, if it says there are no devices, check if `pcspkr` kernel module is enabled and not blacklisted in any .conf file under `/etc/modprobe/`
@@ -209,6 +218,9 @@ This program was written and tested on one platform only, so some features may b
 If you manage to make another device working, open an issue describing what you've done, I'll add it to the documentation.
 
 Last but not least, every contribution (even the smallest) is welcome, software is better when done together.
+
+## Changelog (dd/MM/YYYY)
+- 02/10/2022: added beep enable/disable option and list of processes to kill before unmounting in config file
 
 #
 #

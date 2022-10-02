@@ -19,11 +19,13 @@ if geteuid() != 0:
     exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
 
 CONFIG = {
+    'beep': True,
     'devices': [],
     'mount_path_root': "/share/external",
     'mount_path_owner': "root",
     'mount_path_group': "root",
-    'mount_path_perms': 0o755
+    'mount_path_perms': 0o755,
+    'kill': ['smbd']
 }
 CONFIG_FILE = Path('/etc/autodisk/autodisk.conf')
 if not CONFIG_FILE.exists():
@@ -33,19 +35,18 @@ if not CONFIG_FILE.exists():
     print(f'Configuration file {CONFIG_FILE} not found, created.', file=stderr)
     exit()
 
-
-conf = safe_load(open(CONFIG_FILE))
-conf_has_errors = False
-for key in CONFIG:
-    if key not in conf:
-        print('Configuration file {} has no key {}, using default value: {}'.format(CONFIG_FILE, key, CONFIG[key]),
-              file=stderr)
-    elif not isinstance(conf[key], type(CONFIG[key])):
-        print('{} wants values of type {} but got {}'.format(key, type(CONFIG[key]), type(conf[key])), file=stderr)
-        conf_has_errors = True
-if conf_has_errors:
-    exit(1)
-CONFIG = conf
+with open(CONFIG_FILE, encoding='utf8') as configfile:
+    conf = safe_load(configfile)
+    conf_has_errors = False
+    for key in CONFIG:
+        if key not in conf:
+            print('Configuration file {} has no key {}, using default value: {}'.format(CONFIG_FILE, key, CONFIG[key]), file=stderr)
+        elif not isinstance(conf[key], type(CONFIG[key])):
+            print('{} wants values of type {} but got {}'.format(key, type(CONFIG[key]), type(conf[key])), file=stderr)
+            conf_has_errors = True
+    if conf_has_errors:
+        exit(1)
+    CONFIG = conf
 
 CONFIG['mount_path_uid'] = getpwnam(CONFIG['mount_path_owner']).pw_uid
 CONFIG['mount_path_gid'] = getgrnam(CONFIG['mount_path_group']).gr_gid
@@ -140,22 +141,22 @@ def unmount(block_dev) -> bool:
                 # all smbd processes that keep mountpoint locked
                 # afaik there is no way to avoid this
                 #
-                # if other programs behave the same way we'll
-                # need to write a proper routine to kill them all
-                #run(f'lsof -atc smbd {mnt_dir} | xargs -r kill', shell=True)
-                for pid in check_output(['lsof', '-atc', 'smbd', mnt_dir]).decode('utf-8').split():
-                    kill(int(pid), 9)
+                # if other programs behave the same way
+                # add them in the config file
+                for process in CONFIG['kill']:
+                    for pid in check_output(['lsof', '-atc', process, mnt_dir]).decode('utf-8').split():
+                        kill(int(pid), 9)
                 check_output(['umount', mnt_dir]).decode('utf-8').strip()
             except CalledProcessError:
                 errs += 1
                 print(f'There was an error unmounting {part_name}, skipping...')
-                run(['beep', '-f', '800', '-l', '750', '-r', '2', '-d', '750'])
+                if CONFIG['beep']: run(['beep', '-f', '800', '-l', '750', '-r', '2', '-d', '750'])
     if not errs:
         NAMES['umnt_files'].pop(str(Path(str(_UMOUNT_FILES_FOLDER.resolve()) + "/DELETE_THIS_FILE_TO_UNMOUNT_" +
                                          NAMES[block_dev]['name']).resolve()), None)
         try:
             rmtree(f'{_MOUNT_PATH_ROOT}/{block_name}')
-            run('beep')
+            if CONFIG['beep']: run('beep')
         except Exception:
             pass
         return True
