@@ -1,3 +1,6 @@
+## 2023/09/25: Autodisk is no longer maintained, consider using [udiskie](https://github.com/coldfix/udiskie).
+
+
 # Autodisk (beta)
 Automatically mount a drive if connected to a specific USB or SATA port.
 
